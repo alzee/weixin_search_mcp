@@ -6,7 +6,7 @@ from lxml import html
 from urllib.parse import quote
 import time
 
-def sogou_weixin_search(query: Annotated[str, "搜索关键词"]) -> List[Dict[str, str]]:
+def sogou_weixin_search(query: Annotated[str, "搜索关键词"], page: int = 1) -> List[Dict[str, str]]:
     """在搜狗微信搜索中搜索指定关键词并返回结果列表，包含真实URL"""
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -25,6 +25,7 @@ def sogou_weixin_search(query: Annotated[str, "搜索关键词"]) -> List[Dict[s
         'ie': 'utf8',
         '_sug_': 'n',
         '_sug_type_': '',
+        'page': page,
     }
 
     try:
