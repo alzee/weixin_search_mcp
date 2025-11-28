@@ -14,6 +14,8 @@ import argparse
 
 # 导入工具函数
 from weixin_search_mcp.tools.weixin_search import sogou_weixin_search, get_real_url, get_article_content
+ 
+import psycopg2
 
 # 配置日志
 def setup_logger(log_level="INFO"):
@@ -47,6 +49,50 @@ def get_weixin_article_content(real_url: Annotated[str, "真实微信公众号�
     return get_article_content(real_url, referer)
 
 if __name__ == "__main__":
+    # Set up database connection parameters (customize as needed)
+    db_params = {
+        "dbname": os.getenv("POSTGRES_DB", "search"),
+        "user": os.getenv("POSTGRES_USER", "search"),
+        "password": os.getenv("POSTGRES_PASSWORD", "search"),
+        "host": os.getenv("POSTGRES_HOST", "localhost"),
+        "port": os.getenv("POSTGRES_PORT", "5432"),
+    }
+
     for i in range(1, 10):
         r = weixin_search('国芯一号', i)
-        print(r)
+        # print(r)
+
+        for item in r:
+            title = item.get('title')
+            link = item.get('link')
+            snippet = ''
+
+            if 'conn' not in globals():
+                conn = psycopg2.connect(**db_params)
+                cursor = conn.cursor()
+                # Ensure the table exists
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS search_result (
+                        id SERIAL PRIMARY KEY,
+                        title TEXT,
+                        link TEXT,
+                        snippet TEXT
+                    );
+                """)
+                conn.commit()
+
+            # Insert the result item into the table
+            # check duplicate
+            cursor.execute(
+                "SELECT COUNT(*) FROM search_result WHERE link = %s",
+                (link,)
+            )
+            count = cursor.fetchone()[0]
+            if count > 0:
+                continue
+            else:
+                cursor.execute(
+                    "INSERT INTO search_result (title, link, snippet, type) VALUES (%s, %s, %s, 1)",
+                    (title, link, snippet)
+                )
+                conn.commit()
