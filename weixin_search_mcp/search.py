@@ -17,6 +17,8 @@ from weixin_search_mcp.tools.weixin_search import sogou_weixin_search, get_real_
  
 import psycopg2
 
+load_dotenv()
+
 # 配置日志
 def setup_logger(log_level="INFO"):
     """设置日志配置"""
